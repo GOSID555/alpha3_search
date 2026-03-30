@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ค้นหาตัวย่อประเทศ (ISO 3166-1 alpha-3)</title>
+    <title>ค้นหาตัวย่อประเทศพร้อมธงชาติ (ISO 3166-1 alpha-3)</title>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -22,7 +22,7 @@
         }
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
             background: white;
             padding: 30px;
             border-radius: 12px;
@@ -55,6 +55,7 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
         .results-table th {
             background-color: #f8f9fa;
@@ -70,6 +71,17 @@
             border-radius: 6px;
             font-weight: bold;
             font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .country-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .flag-img {
+            width: 32px;
+            border-radius: 3px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
         .no-results {
             text-align: center;
@@ -88,8 +100,8 @@
     <table class="results-table">
         <thead>
             <tr>
-                <th style="width: 30%;">ตัวย่อ (Code)</th>
-                <th>ชื่อประเทศ (Country)</th>
+                <th style="width: 25%;">ตัวย่อ (Code)</th>
+                <th>ธง และ ชื่อประเทศ (Country)</th>
             </tr>
         </thead>
         <tbody id="resultsBody">
@@ -98,63 +110,116 @@
 </div>
 
 <script>
-    // ฐานข้อมูลตัวย่อประเทศทั้งโลก (ISO 3166-1 alpha-3)
-    const countries = {
-        "AFG": "Afghanistan", "ALB": "Albania", "DZA": "Algeria", "ASM": "American Samoa", "AND": "Andorra", 
-        "AGO": "Angola", "AIA": "Anguilla", "ATA": "Antarctica", "ATG": "Antigua and Barbuda", "ARG": "Argentina", 
-        "ARM": "Armenia", "ABW": "Aruba", "AUS": "Australia", "AUT": "Austria", "AZE": "Azerbaijan", 
-        "BHS": "Bahamas", "BHR": "Bahrain", "BGD": "Bangladesh", "BRB": "Barbados", "BLR": "Belarus", 
-        "BEL": "Belgium", "BLZ": "Belize", "BEN": "Benin", "BMU": "Bermuda", "BTN": "Bhutan", 
-        "BOL": "Bolivia", "BIH": "Bosnia and Herzegovina", "BWA": "Botswana", "BRA": "Brazil", "BRN": "Brunei Darussalam", 
-        "BGR": "Bulgaria", "BFA": "Burkina Faso", "BDI": "Burundi", "CPV": "Cabo Verde", "KHM": "Cambodia", 
-        "CMR": "Cameroon", "CAN": "Canada", "CAF": "Central African Republic", "TCD": "Chad", "CHL": "Chile", 
-        "CHN": "China", "COL": "Colombia", "COM": "Comoros", "COG": "Congo", "COD": "Congo (Democratic Republic)", 
-        "CRI": "Costa Rica", "CIV": "Côte d'Ivoire", "HRV": "Croatia", "CUB": "Cuba", "CYP": "Cyprus", 
-        "CZE": "Czechia", "DNK": "Denmark", "DJI": "Djibouti", "DMA": "Dominica", "DOM": "Dominican Republic", 
-        "ECU": "Ecuador", "EGY": "Egypt", "SLV": "El Salvador", "GNQ": "Equatorial Guinea", "ERI": "Eritrea", 
-        "EST": "Estonia", "SWZ": "Eswatini", "ETH": "Ethiopia", "FJI": "Fiji", "FIN": "Finland", 
-        "FRA": "France", "GAB": "Gabon", "GMB": "Gambia", "GEO": "Georgia", "DEU": "Germany", 
-        "GHA": "Ghana", "GRC": "Greece", "GRD": "Grenada", "GTM": "Guatemala", "GIN": "Guinea", 
-        "GNB": "Guinea-Bissau", "GUY": "Guyana", "HTI": "Haiti", "HND": "Honduras", "HUN": "Hungary", 
-        "ISL": "Iceland", "IND": "India", "IDN": "Indonesia", "IRN": "Iran", "IRQ": "Iraq", 
-        "IRL": "Ireland", "ISR": "Israel", "ITA": "Italy", "JAM": "Jamaica", "JPN": "Japan", 
-        "JOR": "Jordan", "KAZ": "Kazakhstan", "KEN": "Kenya", "KIR": "Kiribati", "PRK": "Korea (North)", 
-        "KOR": "Korea (South)", "KWT": "Kuwait", "KGZ": "Kyrgyzstan", "LAO": "Lao PDR", "LVA": "Latvia", 
-        "LBN": "Lebanon", "LSO": "Lesotho", "LBR": "Liberia", "LBY": "Libya", "LIE": "Liechtenstein", 
-        "LTU": "Lithuania", "LUX": "Luxembourg", "MDG": "Madagascar", "MWI": "Malawi", "MYS": "Malaysia", 
-        "MDV": "Maldives", "MLI": "Mali", "MLT": "Malta", "MHL": "Marshall Islands", "MRT": "Mauritania", 
-        "MUS": "Mauritius", "MEX": "Mexico", "FSM": "Micronesia", "MDA": "Moldova", "MCO": "Monaco", 
-        "MNG": "Mongolia", "MNE": "Montenegro", "MAR": "Morocco", "MOZ": "Mozambique", "MMR": "Myanmar", 
-        "NAM": "Namibia", "NRU": "Nauru", "NPL": "Nepal", "NLD": "Netherlands", "NZL": "New Zealand", 
-        "NIC": "Nicaragua", "NER": "Niger", "NGA": "Nigeria", "MKD": "North Macedonia", "NOR": "Norway", 
-        "OMN": "Oman", "PAK": "Pakistan", "PLW": "Palau", "PAN": "Panama", "PNG": "Papua New Guinea", 
-        "PRY": "Paraguay", "PER": "Peru", "PHL": "Philippines", "POL": "Poland", "PRT": "Portugal", 
-        "QAT": "Qatar", "ROU": "Romania", "RUS": "Russia", "RWA": "Rwanda", "KNA": "Saint Kitts and Nevis", 
-        "LCA": "Saint Lucia", "VCT": "Saint Vincent and the Grenadines", "WSM": "Samoa", "SMR": "San Marino", 
-        "STP": "Sao Tome and Principe", "SAU": "Saudi Arabia", "SEN": "Senegal", "SRB": "Serbia", 
-        "SYC": "Seychelles", "SLE": "Sierra Leone", "SGP": "Singapore", "SVK": "Slovakia", "SVN": "Slovenia", 
-        "SLB": "Solomon Islands", "SOM": "Somalia", "ZAF": "South Africa", "SSD": "South Sudan", "ESP": "Spain", 
-        "LKA": "Sri Lanka", "SDN": "Sudan", "SUR": "Suriname", "SWE": "Sweden", "CHE": "Switzerland", 
-        "SYR": "Syria", "TWN": "Taiwan", "TJK": "Tajikistan", "TZA": "Tanzania", "THA": "Thailand", 
-        "TLS": "Timor-Leste", "TGO": "Togo", "TON": "Tonga", "TTO": "Trinidad and Tobago", "TUN": "Tunisia", 
-        "TUR": "Turkey", "TKM": "Turkmenistan", "TUV": "Tuvalu", "UGA": "Uganda", "UKR": "Ukraine", 
-        "ARE": "United Arab Emirates", "GBR": "United Kingdom", "USA": "United States", "URY": "Uruguay", 
-        "UZB": "Uzbekistan", "VUT": "Vanuatu", "VEN": "Venezuela", "VNM": "Vietnam", "YEM": "Yemen", 
-        "ZMB": "Zambia", "ZWE": "Zimbabwe"
-    };
+    // ฐานข้อมูลตัวย่อ 3 ตัวอักษร พร้อมรหัส 2 ตัวอักษรเพื่อใช้ดึงรูปธงชาติ
+    const countryData = [
+        { code3: "AFG", code2: "af", name: "Afghanistan" }, { code3: "ALB", code2: "al", name: "Albania" },
+        { code3: "DZA", code2: "dz", name: "Algeria" }, { code3: "ASM", code2: "as", name: "American Samoa" },
+        { code3: "AND", code2: "ad", name: "Andorra" }, { code3: "AGO", code2: "ao", name: "Angola" },
+        { code3: "AIA", code2: "ai", name: "Anguilla" }, { code3: "ATA", code2: "aq", name: "Antarctica" },
+        { code3: "ATG", code2: "ag", name: "Antigua and Barbuda" }, { code3: "ARG", code2: "ar", name: "Argentina" },
+        { code3: "ARM", code2: "am", name: "Armenia" }, { code3: "ABW", code2: "aw", name: "Aruba" },
+        { code3: "AUS", code2: "au", name: "Australia" }, { code3: "AUT", code2: "at", name: "Austria" },
+        { code3: "AZE", code2: "az", name: "Azerbaijan" }, { code3: "BHS", code2: "bs", name: "Bahamas" },
+        { code3: "BHR", code2: "bh", name: "Bahrain" }, { code3: "BGD", code2: "bd", name: "Bangladesh" },
+        { code3: "BRB", code2: "bb", name: "Barbados" }, { code3: "BLR", code2: "by", name: "Belarus" },
+        { code3: "BEL", code2: "be", name: "Belgium" }, { code3: "BLZ", code2: "bz", name: "Belize" },
+        { code3: "BEN", code2: "bj", name: "Benin" }, { code3: "BMU", code2: "bm", name: "Bermuda" },
+        { code3: "BTN", code2: "bt", name: "Bhutan" }, { code3: "BOL", code2: "bo", name: "Bolivia" },
+        { code3: "BIH", code2: "ba", name: "Bosnia and Herzegovina" }, { code3: "BWA", code2: "bw", name: "Botswana" },
+        { code3: "BRA", code2: "br", name: "Brazil" }, { code3: "BRN", code2: "bn", name: "Brunei Darussalam" },
+        { code3: "BGR", code2: "bg", name: "Bulgaria" }, { code3: "BFA", code2: "bf", name: "Burkina Faso" },
+        { code3: "BDI", code2: "bi", name: "Burundi" }, { code3: "CPV", code2: "cv", name: "Cabo Verde" },
+        { code3: "KHM", code2: "kh", name: "Cambodia" }, { code3: "CMR", code2: "cm", name: "Cameroon" },
+        { code3: "CAN", code2: "ca", name: "Canada" }, { code3: "CAF", code2: "cf", name: "Central African Republic" },
+        { code3: "TCD", code2: "td", name: "Chad" }, { code3: "CHL", code2: "cl", name: "Chile" },
+        { code3: "CHN", code2: "cn", name: "China" }, { code3: "COL", code2: "co", name: "Colombia" },
+        { code3: "COM", code2: "km", name: "Comoros" }, { code3: "COG", code2: "cg", name: "Congo" },
+        { code3: "COD", code2: "cd", name: "Congo (Democratic Republic)" }, { code3: "CRI", code2: "cr", name: "Costa Rica" },
+        { code3: "CIV", code2: "ci", name: "Côte d'Ivoire" }, { code3: "HRV", code2: "hr", name: "Croatia" },
+        { code3: "CUB", code2: "cu", name: "Cuba" }, { code3: "CYP", code2: "cy", name: "Cyprus" },
+        { code3: "CZE", code2: "cz", name: "Czechia" }, { code3: "DNK", code2: "dk", name: "Denmark" },
+        { code3: "DJI", code2: "dj", name: "Djibouti" }, { code3: "DMA", code2: "dm", name: "Dominica" },
+        { code3: "DOM", code2: "do", name: "Dominican Republic" }, { code3: "ECU", code2: "ec", name: "Ecuador" },
+        { code3: "EGY", code2: "eg", name: "Egypt" }, { code3: "SLV", code2: "sv", name: "El Salvador" },
+        { code3: "GNQ", code2: "gq", name: "Equatorial Guinea" }, { code3: "ERI", code2: "er", name: "Eritrea" },
+        { code3: "EST", code2: "ee", name: "Estonia" }, { code3: "SWZ", code2: "sz", name: "Eswatini" },
+        { code3: "ETH", code2: "et", name: "Ethiopia" }, { code3: "FJI", code2: "fj", name: "Fiji" },
+        { code3: "FIN", code2: "fi", name: "Finland" }, { code3: "FRA", code2: "fr", name: "France" },
+        { code3: "GAB", code2: "ga", name: "Gabon" }, { code3: "GMB", code2: "gm", name: "Gambia" },
+        { code3: "GEO", code2: "ge", name: "Georgia" }, { code3: "DEU", code2: "de", name: "Germany" },
+        { code3: "GHA", code2: "gh", name: "Ghana" }, { code3: "GRC", code2: "gr", name: "Greece" },
+        { code3: "GRD", code2: "gd", name: "Grenada" }, { code3: "GTM", code2: "gt", name: "Guatemala" },
+        { code3: "GIN", code2: "gn", name: "Guinea" }, { code3: "GNB", code2: "gw", name: "Guinea-Bissau" },
+        { code3: "GUY", code2: "gy", name: "Guyana" }, { code3: "HTI", code2: "ht", name: "Haiti" },
+        { code3: "HND", code2: "hn", name: "Honduras" }, { code3: "HUN", code2: "hu", name: "Hungary" },
+        { code3: "ISL", code2: "is", name: "Iceland" }, { code3: "IND", code2: "in", name: "India" },
+        { code3: "IDN", code2: "id", name: "Indonesia" }, { code3: "IRN", code2: "ir", name: "Iran" },
+        { code3: "IRQ", code2: "iq", name: "Iraq" }, { code3: "IRL", code2: "ie", name: "Ireland" },
+        { code3: "ISR", code2: "il", name: "Israel" }, { code3: "ITA", code2: "it", name: "Italy" },
+        { code3: "JAM", code2: "jm", name: "Jamaica" }, { code3: "JPN", code2: "jp", name: "Japan" },
+        { code3: "JOR", code2: "jo", name: "Jordan" }, { code3: "KAZ", code2: "kz", name: "Kazakhstan" },
+        { code3: "KEN", code2: "ke", name: "Kenya" }, { code3: "KIR", code2: "ki", name: "Kiribati" },
+        { code3: "PRK", code2: "kp", name: "Korea (North)" }, { code3: "KOR", code2: "kr", name: "Korea (South)" },
+        { code3: "KWT", code2: "kw", name: "Kuwait" }, { code3: "KGZ", code2: "kg", name: "Kyrgyzstan" },
+        { code3: "LAO", code2: "la", name: "Lao PDR" }, { code3: "LVA", code2: "lv", name: "Latvia" },
+        { code3: "LBN", code2: "lb", name: "Lebanon" }, { code3: "LSO", code2: "ls", name: "Lesotho" },
+        { code3: "LBR", code2: "lr", name: "Liberia" }, { code3: "LBY", code2: "ly", name: "Libya" },
+        { code3: "LIE", code2: "li", name: "Liechtenstein" }, { code3: "LTU", code2: "lt", name: "Lithuania" },
+        { code3: "LUX", code2: "lu", name: "Luxembourg" }, { code3: "MDG", code2: "mg", name: "Madagascar" },
+        { code3: "MWI", code2: "mw", name: "Malawi" }, { code3: "MYS", code2: "my", name: "Malaysia" },
+        { code3: "MDV", code2: "mv", name: "Maldives" }, { code3: "MLI", code2: "ml", name: "Mali" },
+        { code3: "MLT", code2: "mt", name: "Malta" }, { code3: "MHL", code2: "mh", name: "Marshall Islands" },
+        { code3: "MRT", code2: "mr", name: "Mauritania" }, { code3: "MUS", code2: "mu", name: "Mauritius" },
+        { code3: "MEX", code2: "mx", name: "Mexico" }, { code3: "FSM", code2: "fm", name: "Micronesia" },
+        { code3: "MDA", code2: "md", name: "Moldova" }, { code3: "MCO", code2: "mc", name: "Monaco" },
+        { code3: "MNG", code2: "mn", name: "Mongolia" }, { code3: "MNE", code2: "me", name: "Montenegro" },
+        { code3: "MAR", code2: "ma", name: "Morocco" }, { code3: "MOZ", code2: "mz", name: "Mozambique" },
+        { code3: "MMR", code2: "mm", name: "Myanmar" }, { code3: "NAM", code2: "na", name: "Namibia" },
+        { code3: "NRU", code2: "nr", name: "Nauru" }, { code3: "NPL", code2: "np", name: "Nepal" },
+        { code3: "NLD", code2: "nl", name: "Netherlands" }, { code3: "NZL", code2: "nz", name: "New Zealand" },
+        { code3: "NIC", code2: "ni", name: "Nicaragua" }, { code3: "NER", code2: "ne", name: "Niger" },
+        { code3: "NGA", code2: "ng", name: "Nigeria" }, { code3: "MKD", code2: "mk", name: "North Macedonia" },
+        { code3: "NOR", code2: "no", name: "Norway" }, { code3: "OMN", code2: "om", name: "Oman" },
+        { code3: "PAK", code2: "pk", name: "Pakistan" }, { code3: "PLW", code2: "pw", name: "Palau" },
+        { code3: "PAN", code2: "pa", name: "Panama" }, { code3: "PNG", code2: "pg", name: "Papua New Guinea" },
+        { code3: "PRY", code2: "py", name: "Paraguay" }, { code3: "PER", code2: "pe", name: "Peru" },
+        { code3: "PHL", code2: "ph", name: "Philippines" }, { code3: "POL", code2: "pl", name: "Poland" },
+        { code3: "PRT", code2: "pt", name: "Portugal" }, { code3: "QAT", code2: "qa", name: "Qatar" },
+        { code3: "ROU", code2: "ro", name: "Romania" }, { code3: "RUS", code2: "ru", name: "Russia" },
+        { code3: "RWA", code2: "rw", name: "Rwanda" }, { code3: "KNA", code2: "kn", name: "Saint Kitts and Nevis" },
+        { code3: "LCA", code2: "lc", name: "Saint Lucia" }, { code3: "VCT", code2: "vc", name: "Saint Vincent and the Grenadines" },
+        { code3: "WSM", code2: "ws", name: "Samoa" }, { code3: "SMR", code2: "sm", name: "San Marino" },
+        { code3: "STP", code2: "st", name: "Sao Tome and Principe" }, { code3: "SAU", code2: "sa", name: "Saudi Arabia" },
+        { code3: "SEN", code2: "sn", name: "Senegal" }, { code3: "SRB", code2: "rs", name: "Serbia" },
+        { code3: "SYC", code2: "sc", name: "Seychelles" }, { code3: "SLE", code2: "sl", name: "Sierra Leone" },
+        { code3: "SGP", code2: "sg", name: "Singapore" }, { code3: "SVK", code2: "sk", name: "Slovakia" },
+        { code3: "SVN", code2: "si", name: "Slovenia" }, { code3: "SLB", code2: "sb", name: "Solomon Islands" },
+        { code3: "SOM", code2: "so", name: "Somalia" }, { code3: "ZAF", code2: "za", name: "South Africa" },
+        { code3: "SSD", code2: "ss", name: "South Sudan" }, { code3: "ESP", code2: "es", name: "Spain" },
+        { code3: "LKA", code2: "lk", name: "Sri Lanka" }, { code3: "SDN", code2: "sd", name: "Sudan" },
+        { code3: "SUR", code2: "sr", name: "Suriname" }, { code3: "SWE", code2: "se", name: "Sweden" },
+        { code3: "CHE", code2: "ch", name: "Switzerland" }, { code3: "SYR", code2: "sy", name: "Syria" },
+        { code3: "TWN", code2: "tw", name: "Taiwan" }, { code3: "TJK", code2: "tj", name: "Tajikistan" },
+        { code3: "TZA", code2: "tz", name: "Tanzania" }, { code3: "THA", code2: "th", name: "Thailand" },
+        { code3: "TLS", code2: "tl", name: "Timor-Leste" }, { code3: "TGO", code2: "tg", name: "Togo" },
+        { code3: "TON", code2: "to", name: "Tonga" }, { code3: "TTO", code2: "tt", name: "Trinidad and Tobago" },
+        { code3: "TUN", code2: "tn", name: "Tunisia" }, { code3: "TUR", code2: "tr", name: "Turkey" },
+        { code3: "TKM", code2: "tm", name: "Turkmenistan" }, { code3: "TUV", code2: "tv", name: "Tuvalu" },
+        { code3: "UGA", code2: "ug", name: "Uganda" }, { code3: "UKR", code2: "ua", name: "Ukraine" },
+        { code3: "ARE", code2: "ae", name: "United Arab Emirates" }, { code3: "GBR", code2: "gb", name: "United Kingdom" },
+        { code3: "USA", code2: "us", name: "United States" }, { code3: "URY", code2: "uy", name: "Uruguay" },
+        { code3: "UZB", code2: "uz", name: "Uzbekistan" }, { code3: "VUT", code2: "vu", name: "Vanuatu" },
+        { code3: "VEN", code2: "ve", name: "Venezuela" }, { code3: "VNM", code2: "vn", name: "Vietnam" },
+        { code3: "YEM", code2: "ye", name: "Yemen" }, { code3: "ZMB", code2: "zm", name: "Zambia" },
+        { code3: "ZWE", code2: "zw", name: "Zimbabwe" }
+    ];
 
     const searchInput = document.getElementById('searchInput');
     const resultsBody = document.getElementById('resultsBody');
 
-    // ฟังก์ชันสำหรับแปลง Object เป็น Array เพื่อให้ค้นหาง่ายขึ้น
-    const countryArray = Object.keys(countries).map(code => ({
-        code: code,
-        name: countries[code]
-    }));
-
-    // ฟังก์ชันแสดงผลข้อมูลลงตาราง
+    // ฟังก์ชันแสดงผลข้อมูลและรูปธงชาติ
     function displayResults(data) {
-        resultsBody.innerHTML = ''; // เคลียร์ข้อมูลเก่า
+        resultsBody.innerHTML = ''; 
         
         if (data.length === 0) {
             resultsBody.innerHTML = '<tr><td colspan="2" class="no-results">ไม่พบข้อมูลประเทศที่ค้นหา</td></tr>';
@@ -163,28 +228,36 @@
 
         data.forEach(item => {
             const row = document.createElement('tr');
+            // ใช้ FlagCDN ในการดึงรูปธงชาติด้วยรหัส 2 ตัวอักษร
+            const flagUrl = `https://flagcdn.com/w40/${item.code2}.png`;
+            
             row.innerHTML = `
-                <td><span class="code-badge">${item.code}</span></td>
-                <td>${item.name}</td>
+                <td><span class="code-badge">${item.code3}</span></td>
+                <td>
+                    <div class="country-info">
+                        <img src="${flagUrl}" alt="${item.name} flag" class="flag-img" loading="lazy">
+                        <span>${item.name}</span>
+                    </div>
+                </td>
             `;
             resultsBody.appendChild(row);
         });
     }
 
-    // ทำงานเมื่อผู้ใช้พิมพ์ค้นหา
+    // ระบบค้นหา Real-time
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();
         
-        const filteredData = countryArray.filter(item => {
-            return item.code.toLowerCase().includes(searchTerm) || 
+        const filteredData = countryData.filter(item => {
+            return item.code3.toLowerCase().includes(searchTerm) || 
                    item.name.toLowerCase().includes(searchTerm);
         });
 
         displayResults(filteredData);
     });
 
-    // แสดงข้อมูลทั้งหมดตอนโหลดหน้าเว็บครั้งแรก
-    displayResults(countryArray);
+    // โหลดครั้งแรกให้แสดงทุกประเทศ
+    displayResults(countryData);
 </script>
 
 </body>
